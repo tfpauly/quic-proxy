@@ -71,27 +71,28 @@ Table of Contents
 
    1.  Introduction  . . . . . . . . . . . . . . . . . . . . . . . .   2
      1.1.  Conventions and Definitions . . . . . . . . . . . . . . .   4
-   2.  Required Proxy State  . . . . . . . . . . . . . . . . . . . .   4
+     1.2.  Terminology . . . . . . . . . . . . . . . . . . . . . . .   4
+   2.  Required Proxy State  . . . . . . . . . . . . . . . . . . . .   5
      2.1.  Datagram Flow ID Mapping  . . . . . . . . . . . . . . . .   5
-     2.2.  Server Connection ID Mapping  . . . . . . . . . . . . . .   5
+     2.2.  Server Connection ID Mapping  . . . . . . . . . . . . . .   6
      2.3.  Client Connection ID Mappings . . . . . . . . . . . . . .   6
      2.4.  Detecting Connection ID Conflicts . . . . . . . . . . . .   6
-   3.  Connection ID Headers for CONNECT-UDP . . . . . . . . . . . .   6
-   4.  Client Request Behavior . . . . . . . . . . . . . . . . . . .   7
-     4.1.  New Proxied Connection Setup  . . . . . . . . . . . . . .   7
+   3.  Connection ID Headers for CONNECT-UDP . . . . . . . . . . . .   7
+   4.  Client Request Behavior . . . . . . . . . . . . . . . . . . .   8
+     4.1.  New Proxied Connection Setup  . . . . . . . . . . . . . .   8
      4.2.  Adding New Client Connection IDs  . . . . . . . . . . . .   9
      4.3.  Sending With Forwarded Mode . . . . . . . . . . . . . . .   9
-     4.4.  Receiving With Forwarded Mode . . . . . . . . . . . . . .   9
+     4.4.  Receiving With Forwarded Mode . . . . . . . . . . . . . .  10
      4.5.  Opting Out of Forwarded Mode  . . . . . . . . . . . . . .  10
    5.  Proxy Response Behavior . . . . . . . . . . . . . . . . . . .  10
      5.1.  Removing Mapping State  . . . . . . . . . . . . . . . . .  12
-   6.  Example . . . . . . . . . . . . . . . . . . . . . . . . . . .  12
-   7.  Interactions with Load Balancers  . . . . . . . . . . . . . .  13
+   6.  Example . . . . . . . . . . . . . . . . . . . . . . . . . . .  13
+   7.  Interactions with Load Balancers  . . . . . . . . . . . . . .  14
    8.  Security Considerations . . . . . . . . . . . . . . . . . . .  14
-   9.  IANA Considerations . . . . . . . . . . . . . . . . . . . . .  14
-     9.1.  HTTP Headers  . . . . . . . . . . . . . . . . . . . . . .  14
-   10. References  . . . . . . . . . . . . . . . . . . . . . . . . .  14
-     10.1.  Normative References . . . . . . . . . . . . . . . . . .  14
+   9.  IANA Considerations . . . . . . . . . . . . . . . . . . . . .  15
+     9.1.  HTTP Headers  . . . . . . . . . . . . . . . . . . . . . .  15
+   10. References  . . . . . . . . . . . . . . . . . . . . . . . . .  15
+     10.1.  Normative References . . . . . . . . . . . . . . . . . .  15
      10.2.  Informative References . . . . . . . . . . . . . . . . .  16
    Acknowledgments . . . . . . . . . . . . . . . . . . . . . . . . .  16
    Authors' Addresses  . . . . . . . . . . . . . . . . . . . . . . .  16
@@ -103,9 +104,8 @@ Table of Contents
    between the proxy and a target server.  This can be used to proxy
    QUIC connections [QUIC], since QUIC runs over UDP datagrams.
 
-   This document uses the term "target" to refer to the server that a
-   client is accessing via a proxy.  This target may be an origin
-   hosting content, or another proxy.
+
+
 
 
 
@@ -114,6 +114,10 @@ Pauly & Schinazi          Expires 19 April 2021                 [Page 2]
 Internet-Draft                 QUIC Proxy                   October 2020
 
 
+   This document uses the term "target" to refer to the server that a
+   client is accessing via a proxy.  This target may be an origin
+   hosting content, or another proxy.
+
    This document extends the CONNECT-UDP HTTP method to add signalling
    about QUIC Connection IDs.  QUIC Connection IDs are used to identify
    QUIC connections in scenarios where there is not a strict
@@ -121,6 +125,9 @@ Internet-Draft                 QUIC Proxy                   October 2020
    (pairs of IP addresses and ports).  A proxy that is aware of
    Connection IDs can reuse UDP 4-tuples between itself and a target for
    multiple proxied QUIC connections.
+
+   This extension is only defined for HTTP/3 [HTTP3] and not any earlier
+   versions.
 
    Awareness of Connection IDs also allows a proxy to avoid re-
    encapsulation and re-encryption of proxied QUIC packets once a
@@ -154,13 +161,6 @@ Internet-Draft                 QUIC Proxy                   October 2020
    *  The target server cannot know the IP address of the client solely
       based on the proxied packets the target receives.
 
-   *  Observers of either or both of the client <-> proxy link and the
-      proxy <-> target are not able to learn more about the client <->
-      target communication than if no proxy was used.
-
-   It is not a goal of forwarding mode to prevent correlation between
-   client <-> proxy and the proxy <-> target packets from an entity that
-   can observe both links.  See Section 8 for futher discussion.
 
 
 
@@ -170,8 +170,21 @@ Pauly & Schinazi          Expires 19 April 2021                 [Page 3]
 Internet-Draft                 QUIC Proxy                   October 2020
 
 
+   *  Observers of either or both of the client <-> proxy link and the
+      proxy <-> target are not able to learn more about the client <->
+      target communication than if no proxy was used.
+
+   It is not a goal of forwarding mode to prevent correlation between
+   client <-> proxy and the proxy <-> target packets from an entity that
+   can observe both links.  See Section 8 for further discussion.
+
    Both clients and proxies can unilaterally choose to disable forwarded
    mode for any client <-> target connection.
+
+   QUIC proxies only need to understand the Header Form bit, and the
+   connection ID fields from packets in client <-> target QUIC
+   connections.  Since these fields are all in the QUIC invariants
+   header [INVARIANTS], QUIC proxies can proxy all versions of QUIC.
 
 1.1.  Conventions and Definitions
 
@@ -181,43 +194,30 @@ Internet-Draft                 QUIC Proxy                   October 2020
    14 [RFC2119] [RFC8174] when, and only when, they appear in all
    capitals, as shown here.
 
-2.  Required Proxy State
+1.2.  Terminology
 
-   In the methods defined in this document, the proxy is aware of the
-   QUIC Connection IDs being used by proxied connections, along with the
-   UDP 4-tuples (local and remote IP addresses and ports) used to
-   communicate with the client and the target.  Tracking Connection IDs
-   in this way allows the proxy to reuse server-facing sockets for
-   multiple connections and support the forwarding mode of proxying.
+   This document uses the following terms:
 
-   A QUIC Connection ID identifies the receiver of a packet, and is
-   chosen by the receiver.
+   *  Client: the client of all QUIC connections discussed in this
+      document.
 
-   A Connection ID that is defined by the client of HTTP/3 proxy, and is
-   used to route packets from the target server to the client when it is
-   a Destination Connection ID, is referred to as the "Client Connection
-   ID".
+   *  Proxy: the endpoint that responds to the CONNECT-UDP request.
 
-   A Connection ID that is defined by the target server accessed via an
-   HTTP/3 proxy, and is used to route packets from the client to the
-   target server when it is a Destination Connection ID, is referred to
-   as the "Server Connection ID".
+   *  Target: the server that a client is accessing via a proxy.
 
-   QUIC packets can be either tunnelled within an HTTP/3 proxy
-   connection using QUIC DATAGRAM frames, or be forwarded directly
-   alongside an HTTP/3 proxy connection on the same set of IP addresses
-   and UDP ports.  The use of forwarded mode requires the consent of
-   both the client and the proxy.
+   *  Client <-> Proxy QUIC connection: a single QUIC connection
+      established from the client to the proxy.
 
-   In order to correctly route QUIC packets in both tunnelled and
-   forwarded modes, the proxy needs to maintain mappings between several
-   items:
-
-   *  Client <-> Proxy QUIC connection, which is a single QUIC
-      connection established from the client to the proxy.
-
-   *  Datagram flow ID, which represents a flow of HTTP/3 DATAGRAMs
+   *  Datagram flow ID: represents a flow of HTTP/3 DATAGRAMs [H3DGRAM]
       specific to a single client <-> proxy QUIC connection.
+
+   *  Socket: a UDP 4-tuple (local IP address, local UDP port, remote IP
+      address, remote UDP port).  In some implementations, this is
+      referred to as a "connected" socket.
+
+   *  Client-facing socket: the socket used to communicate between the
+      client and the proxy.
+
 
 
 
@@ -226,31 +226,44 @@ Pauly & Schinazi          Expires 19 April 2021                 [Page 4]
 Internet-Draft                 QUIC Proxy                   October 2020
 
 
-   *  Client-facing socket, which is the UDP 4-tuple of addresses and
-      ports used to communicate between the client and the proxy.
+   *  Server-facing socket: the socket used to communicate between the
+      proxy and the target.
 
-   *  Server-facing socket, which is the UDP 4-tuple of addresses and
-      ports used to communicate between the proxy and the target.
+   *  Client Connection ID: a QUIC Connection ID that is chosen by the
+      client, and is used in the Destination Connection ID field of
+      packets from the target to the client.
 
-   *  Client Connection ID, which is a QUIC Connection ID used to route
-      traffic to a client.
+   *  Server Connection ID: a QUIC Connection ID that is chosen by the
+      target, and is used in the Destination Connection ID field of
+      packets from the client to the target.
 
-   *  Server Connection ID, which is a QUIC Connection ID used to route
-      traffic to a target.
+2.  Required Proxy State
 
-   Note that this document refers to UDP 4-tuples (local address, local
-   port, remote address, remote port) as "sockets".  This is equivalent
-   to a "connected" UDP socket.  Implementations will often use UDP
-   socket APIs that only define the local port.
+   In the methods defined in this document, the proxy is aware of the
+   QUIC Connection IDs being used by proxied connections, along with the
+   sockets used to communicate with the client and the target.  Tracking
+   Connection IDs in this way allows the proxy to reuse server-facing
+   sockets for multiple connections and support the forwarding mode of
+   proxying.
 
-   There are three required unidirectional mappings, described below.
+   QUIC packets can be either tunnelled within an HTTP/3 proxy
+   connection using QUIC DATAGRAM frames [DGRAM], or be forwarded
+   directly alongside an HTTP/3 proxy connection on the same set of IP
+   addresses and UDP ports.  The use of forwarded mode requires the
+   consent of both the client and the proxy.
+
+   In order to correctly route QUIC packets in both tunnelled and
+   forwarded modes, the proxy needs to maintain mappings between several
+   items.  There are three required unidirectional mappings, described
+   below.
 
 2.1.  Datagram Flow ID Mapping
 
    Each pair of client <-> proxy QUIC connection and datagram flow ID
    MUST be mapped to a single server-facing socket.
 
-(Client <-> Proxy QUIC connection + Datagram flow ID) => Server-facing socket
+   (Client <-> Proxy QUIC connection + Datagram flow ID)
+       => Server-facing socket
 
    Multiple datagram flow IDs can map to the same server-facing socket,
    but a single datagram flow ID cannot be mapped to multiple server-
@@ -260,12 +273,22 @@ Internet-Draft                 QUIC Proxy                   October 2020
    ID sent from the client to the proxy in tunnelled mode can be sent to
    the correct target.
 
+
+
+
+
+Pauly & Schinazi          Expires 19 April 2021                 [Page 5]
+
+Internet-Draft                 QUIC Proxy                   October 2020
+
+
 2.2.  Server Connection ID Mapping
 
    Each pair of Server Connection ID and client-facing socket MUST map
    to a single server-facing socket.
 
-   (Client-facing socket + Server Connection ID) => Server-facing socket
+   (Client-facing socket + Server Connection ID)
+       => Server-facing socket
 
    Multiple pairs of Connection IDs and sockets can map to the same
    server-facing socket.
@@ -275,13 +298,6 @@ Internet-Draft                 QUIC Proxy                   October 2020
    be sent to the correct target.  Thus, a proxy that does not allow
    forwarded mode does not need to maintain this mapping.
 
-
-
-Pauly & Schinazi          Expires 19 April 2021                 [Page 5]
-
-Internet-Draft                 QUIC Proxy                   October 2020
-
-
 2.3.  Client Connection ID Mappings
 
    Each pair of Client Connection ID and server-facing socket MUST map
@@ -289,14 +305,16 @@ Internet-Draft                 QUIC Proxy                   October 2020
    connection.  Additionally, the pair of Client Connection ID and
    server-facing socket MUST map to a single client-facing socket.
 
-(Server-facing socket + Client Connection ID) => (Client <-> Proxy QUIC connection + Datagram flow ID)
-(Server-facing socket + Client Connection ID) => Client-facing socket
+   (Server-facing socket + Client Connection ID)
+       => (Client <-> Proxy QUIC connection + Datagram flow ID)
+   (Server-facing socket + Client Connection ID)
+       => Client-facing socket
 
    Multiple pairs of Connection IDs and sockets can map to the same
    datagram flow ID or client-facing socket.
 
    These mappings guarantee that any QUIC packet sent from a target to
-   the proxy can be sent to the correct client, in either tunelled or
+   the proxy can be sent to the correct client, in either tunnelled or
    forwarded mode.  Note that this mapping becomes trivial if the proxy
    always opens a new server-facing socket for every client request with
    a unique datagram flow ID.  The mapping is critical for any case
@@ -305,31 +323,13 @@ Internet-Draft                 QUIC Proxy                   October 2020
 2.4.  Detecting Connection ID Conflicts
 
    In order to be able to route packets correctly in both tunnelled and
-   forwarded mode, proxies MUST check for conflicts before creating a
-   new mapping.  If a conflict is detected, the proxy will reject a
-   client request, as described in Section 5.
+   forwarded mode, proxies check for conflicts before creating a new
+   mapping.  If a conflict is detected, the proxy will reject the
+   client's request, as described in Section 5.
 
-   Two sockets conflict only when the entire 4-tupe (local address,
-   local port, remote address, and remote port) all are identical.
-
-   Two Connection IDs conflict when one Connection ID is equal to or a
-   prefix of another.  For example, a zero-length Connection ID
-   conflicts with all other connection IDs.
-
-   The proxy treats two mappings as being in conflict when a confict is
-   detected for all elements on the left side of the mapping diagrams
-   above.
-
-3.  Connection ID Headers for CONNECT-UDP
-
-   This document defines two headers that can be used in CONNECT-UDP
-   requests and responses.  All other requirements defined for CONNECT-
-   UDP [CONNECT-UDP] still apply.
-
-   "Client-Connection-Id" is an Item Structured Header
-   [I-D.ietf-httpbis-header-structure], containing a client's QUIC
-   Connection ID.  Its value MUST be a Byte Sequence.  The byte sequence
-   MAY be zero-length.  Its ABNF is:
+   Two sockets conflict if and only if all members of the 4-tuple (local
+   IP address, local UDP port, remote IP address, and remote UDP port)
+   are identical.
 
 
 
@@ -338,14 +338,40 @@ Pauly & Schinazi          Expires 19 April 2021                 [Page 6]
 Internet-Draft                 QUIC Proxy                   October 2020
 
 
+   Two Connection IDs conflict if and only if one Connection ID is equal
+   to or a prefix of another.  For example, a zero-length Connection ID
+   conflicts with all connection IDs.  This definition of a conflict
+   originates from the fact that QUIC short headers do not carry the
+   length of the Destination Connection ID field, and therefore if two
+   short headers with different Destination Connection IDs are received
+   on a shared socket, one being a prefix of the other prevents the
+   receiver from identifying which mapping this corresponds to.
+
+   The proxy treats two mappings as being in conflict when a conflict is
+   detected for all elements on the left side of the mapping diagrams
+   above.
+
+   Since very short Connection IDs are more likely to lead to conflicts,
+   particularly zero-length Connection IDs, a proxy MAY choose to reject
+   all requests for very short Connection IDs as conflicts, in
+   anticipation of future conflicts.
+
+3.  Connection ID Headers for CONNECT-UDP
+
+   This document defines two headers that can be used in CONNECT-UDP
+   requests and responses.  All other requirements defined for CONNECT-
+   UDP [CONNECT-UDP] still apply.
+
+   Both "Client-Connection-Id" and "Server-Connection-Id" are Item
+   Structured Headers [STRUCT].  Their value MUST be a Byte Sequence.
+   The byte sequence MAY be zero-length.  The byte sequence length MUST
+   NOT exceed 255 bytes.  The ABNF is:
+
       Client-Connection-Id = sf-binary
-
-   "Server-Connection-Id" is an Item Structured Header
-   [I-D.ietf-httpbis-header-structure], containing a target server's
-   QUIC Connection ID.  Its value MUST be a Byte Sequence.  The byte
-   sequence MAY be zero-length.  Its ABNF is:
-
       Server-Connection-Id = sf-binary
+
+   "Client-Connection-Id" contains the client connection ID, whereas
+   "Server-Connection-Id" contains the server connection ID.
 
    Like the Datagram-Flow-Id header [CONNECT-UDP], the Client-
    Connection-Id and Server-Connection-Id headers can only be supported
@@ -358,6 +384,15 @@ Internet-Draft                 QUIC Proxy                   October 2020
    that do not receive an echoed Client-Connection-Id or Server-
    Connection-Id header MUST fall back to using CONNECT-UDP without the
    extended behavior defined in this document.
+
+
+
+
+
+Pauly & Schinazi          Expires 19 April 2021                 [Page 7]
+
+Internet-Draft                 QUIC Proxy                   October 2020
+
 
 4.  Client Request Behavior
 
@@ -384,26 +419,19 @@ Internet-Draft                 QUIC Proxy                   October 2020
 
    The first time that a client uses a proxy for a given QUIC
    connection, it selects a new datagram flow ID with an even-numbered
-   value [I-D.schinazi-quic-h3-datagram].
-
-
-
-
-Pauly & Schinazi          Expires 19 April 2021                 [Page 7]
-
-Internet-Draft                 QUIC Proxy                   October 2020
-
+   value [H3DGRAM].
 
    The first request the clients makes MUST contain the authority
-   pseudo-header and the Datagram-Flow-Id and Client-Connection-Id
-   headers, containing the selected datagram flow ID and the Client
-   Connection ID that will be used in the initial QUIC packets sent
-   through the proxy.
+   pseudo-header, the Datagram-Flow-Id header, and the Client-
+   Connection-Id header.  These respectively contain the authority of
+   the target, the selected datagram flow ID and the Client Connection
+   ID that will be used in the initial QUIC packets sent through the
+   proxy.
 
    The client can start sending packets tunnelled within DATAGRAM frames
    as soon as this first CONNECT-UDP request for the datagram flow ID
    has been sent, even in the same QUIC packet to the proxy.  That is,
-   the QUIC packet sent from the client to the proxy can contain a
+   the QUIC packet sent from the client to the proxy MAY contain a
    STREAM frame containing the CONNECT-UDP request, as well as a
    DATAGRAM frame that contains a tunnelled QUIC packet to send to the
    target.  This is particularly useful for reducing round trips on
@@ -413,11 +441,19 @@ Internet-Draft                 QUIC Proxy                   October 2020
    proxy, clients are expected to cooperate with proxies in selecting
    Client Connection IDs.  A proxy detects a conflict when it is not
    able to create a unique mapping using the Client Connection ID
-   ({conflicts}).  It can reject requests that would cause a conflict
+   (Section 2.4).  It can reject requests that would cause a conflict
+
+
+
+Pauly & Schinazi          Expires 19 April 2021                 [Page 8]
+
+Internet-Draft                 QUIC Proxy                   October 2020
+
+
    and indicate this to the client by replying with a 409 (Conflict)
    status.  In order to avoid conflicts, clients SHOULD select Client
    Connection IDs of at least 8 bytes in length with unpredictable
-   values.  A client also MUST NOT select a Client Connection ID that
+   values.  A client also SHOULD NOT select a Client Connection ID that
    matches the ID used for the QUIC connection to the proxy, as this
    inherently creates a conflict.
 
@@ -439,26 +475,18 @@ Internet-Draft                 QUIC Proxy                   October 2020
    an existing mapping to the same target server, it will need to
    generate a new QUIC Initial.
 
-
-
-
-
-
-
-Pauly & Schinazi          Expires 19 April 2021                 [Page 8]
-
-Internet-Draft                 QUIC Proxy                   October 2020
-
-
 4.2.  Adding New Client Connection IDs
 
-   A client can add new Connection IDs to a proxied QUIC connection by
-   sending a NEW_CONNECTION_ID frame to the target.
+   Since QUIC connection IDs are chosen by the receiver, an endpoint
+   needs to communicate its chosen connection IDs to its peer before the
+   peer can start using them.  In QUICv1, this is performed using the
+   NEW_CONNECTION_ID frame.
 
-   Prior to sending a NEW_CONNECTION_ID frame to the target for a client
-   Connection ID, the client MUST send a CONNECT-UDP request with the
-   Client-Connection-Id header to the proxy, and only send the
-   NEW_CONNECTION_ID frame once a 2xx (Successful) response is received.
+   Prior to informing the target of a new chosen client connection ID,
+   the client MUST send a CONNECT-UDP request with the Client-
+   Connection-Id header to the proxy, and only inform the target of the
+   new client connection ID once a 2xx (Successful) response is
+   received.
 
 4.3.  Sending With Forwarded Mode
 
@@ -470,6 +498,13 @@ Internet-Draft                 QUIC Proxy                   October 2020
    response, the client MUST send short header packets tunnelled in
    DATAGRAM frames.  The client MAY also choose to tunnel some short
    header packets even after receiving the successful response.
+
+
+
+Pauly & Schinazi          Expires 19 April 2021                 [Page 9]
+
+Internet-Draft                 QUIC Proxy                   October 2020
+
 
    If the client's request that included the Server-Connection-Id is
    rejected, for example with a 409 (Conflict) response, it MUST NOT
@@ -497,15 +532,6 @@ Internet-Draft                 QUIC Proxy                   October 2020
    Once this occurs, the proxy MAY use forwarded mode for any Client
    Connection ID for which it has a valid mapping.
 
-
-
-
-
-Pauly & Schinazi          Expires 19 April 2021                 [Page 9]
-
-Internet-Draft                 QUIC Proxy                   October 2020
-
-
    If a client has started using forwarding mode, it MUST be prepared to
    receive forwarded short header packets on the socket between itself
    and the proxy for any Client Connection ID that has been accepted by
@@ -525,14 +551,22 @@ Internet-Draft                 QUIC Proxy                   October 2020
 
    Upon receipt of a CONNECT-UDP request that contains a Client-
    Connection-Id or Server-Connection-Id header, the proxy validates the
-   request, tries to establish the appropriate mappings described in
+   request, tries to establish the appropriate mappings as described in
    Section 2, and establishes a new server-facing socket if necessary.
+
+
+
+
+Pauly & Schinazi          Expires 19 April 2021                [Page 10]
+
+Internet-Draft                 QUIC Proxy                   October 2020
+
 
    The proxy MUST validate that the request only contains one of either
    the Client-Connection-Id or the Server-Connection-Id header, along
    with a Datagram-Flow-Id header and an authority pseudo-header.  If
    any of these conditions is not met, the proxy MUST reject the request
-   with a 400 (Bad Request) reponse.  The proxy also MUST reject the
+   with a 400 (Bad Request) response.  The proxy also MUST reject the
    request if the requested datagram flow ID has already been used on
    that client <-> proxy QUIC connection with a different requested
    authority.
@@ -552,15 +586,6 @@ Internet-Draft                 QUIC Proxy                   October 2020
    being accessed over a particular server-facing socket so it can avoid
    performing a new DNS query and potentially choosing a different
    server IP address which could map to a different server.
-
-
-
-
-
-Pauly & Schinazi          Expires 19 April 2021                [Page 10]
-
-Internet-Draft                 QUIC Proxy                   October 2020
-
 
    If the request includes a Client-Connection-Id header, the proxy is
    receiving a request to be able to route traffic back to the client
@@ -585,6 +610,14 @@ Internet-Draft                 QUIC Proxy                   October 2020
    conflict, the proxy creates the mapping and responds with a 200 (OK)
    response.  Once the successful response is sent, the proxy will
    forward any short header packets received on the client-facing socket
+
+
+
+Pauly & Schinazi          Expires 19 April 2021                [Page 11]
+
+Internet-Draft                 QUIC Proxy                   October 2020
+
+
    that use the Server Connection ID using the correct server-facing
    socket.  If the pair is not unique, the server responds with a 409
    (Conflict) response.  If this occurs, traffic for that Server
@@ -603,31 +636,22 @@ Internet-Draft                 QUIC Proxy                   October 2020
    that are QUIC short header packets (based on the Header Form bit) and
    have mapped Server Connection IDs.  Packets sent by the client that
    are forwarded SHOULD be considered as activity for restarting QUIC's
-   Idle Timeout [I-D.ietf-quic-transport].
-
-
-
-
-
-
-
-
-
-Pauly & Schinazi          Expires 19 April 2021                [Page 11]
-
-Internet-Draft                 QUIC Proxy                   October 2020
-
+   Idle Timeout [QUIC].
 
 5.1.  Removing Mapping State
 
-   Each CONNECT-UDP request consumes one bidirectional HTTP/3 stream.
-   For any stream on which the proxy has sent a response indicating
-   success, any mappings for the request last as long as the stream is
-   open.
+   Each CONNECT-UDP request consumes one bidirectional HTTP/3 stream
+   [HTTP3].  For any stream on which the proxy has sent a response
+   indicating success, any mappings for the request last as long as the
+   stream is open.
 
    A client that no longer wants a given Connection ID to be forwarded
    by the proxy, for either direction, MUST cancel its CONNECT-UDP
-   HTTP/3 request [I-D.ietf-quic-http].
+   HTTP/3 request by closing the corresponding stream.
+
+   If the proxy rejects a CONNECT-UDP request by sending a status code
+   of 300 or higher, it MUST close the corresponding stream and remove
+   any associated mappings.
 
    If a client's connection to the proxy is terminated for any reason,
    all mappings associated with all requests are removed.
@@ -635,13 +659,28 @@ Internet-Draft                 QUIC Proxy                   October 2020
    A proxy can close its server-facing socket once all datagram flows
    mapped to that socket have been removed.
 
+
+
+
+
+
+
+
+
+
+
+Pauly & Schinazi          Expires 19 April 2021                [Page 12]
+
+Internet-Draft                 QUIC Proxy                   October 2020
+
+
 6.  Example
 
    Consider a client that is establishing a new QUIC connection through
    the proxy.  It has selected a Client Connection ID of 0x31323334.  It
    selects the next open datagram flow ID (2).  In order to inform a
-   proxy of the new QUIC Client Connection ID, and bind that connection
-   ID to datagram flow 2, the client sends the following CONNECT-UDP
+   proxy of the new QUIC Client Connection ID, and binds that connection
+   ID to datagram flow ID 2, the client sends the following CONNECT-UDP
    request:
 
    HEADERS
@@ -656,23 +695,12 @@ Internet-Draft                 QUIC Proxy                   October 2020
    Once the proxy sends a 200 response indicating success, packets
    received by the proxy that match the Connection ID 0x31323334 will be
    directly forwarded to the client.  The proxy will also forward the
-   initial QUIC packet received on DATAGRAM flow 2 to
+   initial QUIC packet received on DATAGRAM flow ID 2 to
    target.example.com:443.
 
    When the proxy receives a response from target.example.com:443 that
    has 0x31323334 as the Destination Connection ID, the proxy will
-   forward that packet to the client on DATAGRAM flow 2.
-
-
-
-
-
-
-
-Pauly & Schinazi          Expires 19 April 2021                [Page 12]
-
-Internet-Draft                 QUIC Proxy                   October 2020
-
+   forward that packet to the client on DATAGRAM flow ID 2.
 
    Once the client learns which Connection ID has been selected by the
    target server, it can send a new request to the proxy to establish a
@@ -686,39 +714,11 @@ Internet-Draft                 QUIC Proxy                   October 2020
    datagram-flow-id = 2
 
    The client also sends its reply to the target server in a DATAGRAM
-   frame on flow 2 after sending the new request.
+   frame on flow ID 2 after sending the new request.
 
    Once the proxy sends a 200 response indicating success, packets sent
    by the client that match the Connection ID 0x61626364 will be
    forwarded to the target server, i.e., without proxy decryption.
-
-   Upon receiving the response, the client starts sending Short Header
-   packets with a Destination Connection ID of 0x61626364 directly to
-   the proxy (not tunnelled), and these are forwarded directly to the
-   target by the proxy.  Similarly, Short Header packets from the target
-   with a Destination Connection ID of 0x31323334 are forwarded directly
-   to the client.
-
-7.  Interactions with Load Balancers
-
-   Some QUIC servers are accessed using load balancers, as described in
-   [I-D.ietf-quic-load-balancers].  These load balancers route packets
-   to servers based on the server's Connection ID.  These Connection IDs
-   are generated in a way that can be coordinated between servers and
-   their load balancers.
-
-   If a proxy that supports this extension is itself running behind a
-   load balancer, extra complexity arises once clients start sending
-   packets to the proxy that have Destination Connection IDs that belong
-   to the end servers, not the proxy.  If the load balancer is not aware
-   of these Connection IDs, or the Connection IDs overlap with other
-   Connection IDs used by the load balancer, packets can be routed
-   incorrectly.
-
-   QUIC-aware CONNECT-UDP proxies generally SHOULD NOT be run behind
-   load balancers; and if they are, they MUST coordinate between the
-   proxy and the load balancer to create mappings for proxied Connection
-   IDs prior to the proxy sending 2xx (Successful) responses to clients.
 
 
 
@@ -730,12 +730,43 @@ Pauly & Schinazi          Expires 19 April 2021                [Page 13]
 Internet-Draft                 QUIC Proxy                   October 2020
 
 
+   Upon receiving the response, the client starts sending Short Header
+   packets with a Destination Connection ID of 0x61626364 directly to
+   the proxy (not tunnelled), and these are forwarded directly to the
+   target by the proxy.  Similarly, Short Header packets from the target
+   with a Destination Connection ID of 0x31323334 are forwarded directly
+   to the client.
+
+7.  Interactions with Load Balancers
+
+   Some QUIC servers are accessed using load balancers, as described in
+   [QUIC-LB].  These load balancers route packets to servers based on
+   the server's Connection ID.  These Connection IDs are generated in a
+   way that can be coordinated between servers and their load balancers.
+
+   If a proxy that supports this extension is itself running behind a
+   load balancer, extra complexity arises once clients start using
+   forwarding mode and sending packets to the proxy that have
+   Destination Connection IDs that belong to the end servers, not the
+   proxy.  If the load balancer is not aware of these Connection IDs, or
+   the Connection IDs conflict with other Connection IDs used by the
+   load balancer, packets can be routed incorrectly.
+
+   QUIC-aware CONNECT-UDP proxies that use forwarding mode generally
+   SHOULD NOT be run behind load balancers; and if they are, they MUST
+   coordinate between the proxy and the load balancer to create mappings
+   for proxied Connection IDs prior to the proxy sending 2xx
+   (Successful) responses to clients.
+
+   QUIC-aware CONNECT-UDP proxies that do not allow forwarding mode can
+   function unmodified behind QUIC load balancers.
+
 8.  Security Considerations
 
-   Proxies that support CONNECT-UDP SHOULD provide protections to rate-
-   limit or restrict clients from opening an excessive number of proxied
-   connections, so as to limit abuse or use of proxies to launch Denial-
-   of-Service attacks.
+   Proxies that support this extension SHOULD provide protections to
+   rate-limit or restrict clients from opening an excessive number of
+   proxied connections, so as to limit abuse or use of proxies to launch
+   Denial-of-Service attacks.
 
    Sending QUIC packets by forwarding through a proxy without tunnelling
    exposes some QUIC header metadata to onlookers, and can be used to
@@ -747,37 +778,6 @@ Internet-Draft                 QUIC Proxy                   October 2020
    typically have a fixed amount of overhead that is removed before
    their DATAGRAM contents are written to the target.)
 
-   Since proxies that forward QUIC packets do not perform any
-   cryptographic integrity check, it is possible that these packets are
-   either malformed, replays, or otherwise malicious.  This may result
-   in proxy targets rate limiting or decreasing the reputation of a
-   given proxy.
-
-   adversary is injecting malicious forwarded packets to induce rate
-   limiting)
-
-9.  IANA Considerations
-
-9.1.  HTTP Headers
-
-   This document registers the "Client-Connection-Id" and"Server-
-   Connection-Id" headers in the "Permanent Message Header Field Names"
-   <https://www.iana.org/assignments/message-headers>.
-
-  +----------------------+----------+--------+----------------------------------+
-  | Header Field Name    | Protocol | Status |            Reference             |
-  +----------------------+----------+--------+----------------------------------+
-  | Client-Connection-Id |   http   |  exp   |          This document           |
-  +----------------------+----------+--------+----------------------------------+
-  | Server-Connection-Id |   http   |  exp   |          This document           |
-  +----------------------+----------+--------+----------------------------------+
-
-10.  References
-
-10.1.  Normative References
-
-
-
 
 
 
@@ -786,42 +786,67 @@ Pauly & Schinazi          Expires 19 April 2021                [Page 14]
 Internet-Draft                 QUIC Proxy                   October 2020
 
 
+   Since proxies that forward QUIC packets do not perform any
+   cryptographic integrity check, it is possible that these packets are
+   either malformed, replays, or otherwise malicious.  This may result
+   in proxy targets rate limiting or decreasing the reputation of a
+   given proxy.
+
+9.  IANA Considerations
+
+9.1.  HTTP Headers
+
+   This document registers the "Client-Connection-Id" and "Server-
+   Connection-Id" headers in the "Permanent Message Header Field Names"
+   <https://www.iana.org/assignments/message-headers>.
+
+     +----------------------+----------+--------+---------------+
+     | Header Field Name    | Protocol | Status |   Reference   |
+     +----------------------+----------+--------+---------------+
+     | Client-Connection-Id |   http   |  exp   | This document |
+     +----------------------+----------+--------+---------------+
+     | Server-Connection-Id |   http   |  exp   | This document |
+     +----------------------+----------+--------+---------------+
+
+10.  References
+
+10.1.  Normative References
+
    [CONNECT-UDP]
               Schinazi, D., "The CONNECT-UDP HTTP Method", Work in
               Progress, Internet-Draft, draft-ietf-masque-connect-udp-
               00, 28 August 2020, <http://www.ietf.org/internet-drafts/
               draft-ietf-masque-connect-udp-00.txt>.
 
+   [DGRAM]    Pauly, T., Kinnear, E., and D. Schinazi, "An Unreliable
+              Datagram Extension to QUIC", Work in Progress, Internet-
+              Draft, draft-ietf-quic-datagram-01, 24 August 2020,
+              <http://www.ietf.org/internet-drafts/draft-ietf-quic-
+              datagram-01.txt>.
+
    [H3DGRAM]  Schinazi, D., "Using QUIC Datagrams with HTTP/3", Work in
               Progress, Internet-Draft, draft-schinazi-quic-h3-datagram-
               05, 12 October 2020, <http://www.ietf.org/internet-drafts/
               draft-schinazi-quic-h3-datagram-05.txt>.
 
-   [I-D.ietf-httpbis-header-structure]
-              Nottingham, M. and P. Kamp, "Structured Field Values for
-              HTTP", Work in Progress, Internet-Draft, draft-ietf-
-              httpbis-header-structure-19, 3 June 2020,
-              <http://www.ietf.org/internet-drafts/draft-ietf-httpbis-
-              header-structure-19.txt>.
-
-   [I-D.ietf-quic-http]
-              Bishop, M., "Hypertext Transfer Protocol Version 3
+   [HTTP3]    Bishop, M., "Hypertext Transfer Protocol Version 3
               (HTTP/3)", Work in Progress, Internet-Draft, draft-ietf-
               quic-http-31, 24 September 2020, <http://www.ietf.org/
               internet-drafts/draft-ietf-quic-http-31.txt>.
 
-   [I-D.ietf-quic-transport]
-              Iyengar, J. and M. Thomson, "QUIC: A UDP-Based Multiplexed
-              and Secure Transport", Work in Progress, Internet-Draft,
-              draft-ietf-quic-transport-31, 24 September 2020,
-              <http://www.ietf.org/internet-drafts/draft-ietf-quic-
-              transport-31.txt>.
 
-   [I-D.schinazi-quic-h3-datagram]
-              Schinazi, D., "Using QUIC Datagrams with HTTP/3", Work in
-              Progress, Internet-Draft, draft-schinazi-quic-h3-datagram-
-              05, 12 October 2020, <http://www.ietf.org/internet-drafts/
-              draft-schinazi-quic-h3-datagram-05.txt>.
+
+
+Pauly & Schinazi          Expires 19 April 2021                [Page 15]
+
+Internet-Draft                 QUIC Proxy                   October 2020
+
+
+   [INVARIANTS]
+              Thomson, M., "Version-Independent Properties of QUIC",
+              Work in Progress, Internet-Draft, draft-ietf-quic-
+              invariants-11, 24 September 2020, <http://www.ietf.org/
+              internet-drafts/draft-ietf-quic-invariants-11.txt>.
 
    [QUIC]     Iyengar, J. and M. Thomson, "QUIC: A UDP-Based Multiplexed
               and Secure Transport", Work in Progress, Internet-Draft,
@@ -834,22 +859,19 @@ Internet-Draft                 QUIC Proxy                   October 2020
               DOI 10.17487/RFC2119, March 1997,
               <https://www.rfc-editor.org/info/rfc2119>.
 
-
-
-
-Pauly & Schinazi          Expires 19 April 2021                [Page 15]
-
-Internet-Draft                 QUIC Proxy                   October 2020
-
-
    [RFC8174]  Leiba, B., "Ambiguity of Uppercase vs Lowercase in RFC
               2119 Key Words", BCP 14, RFC 8174, DOI 10.17487/RFC8174,
               May 2017, <https://www.rfc-editor.org/info/rfc8174>.
 
+   [STRUCT]   Nottingham, M. and P. Kamp, "Structured Field Values for
+              HTTP", Work in Progress, Internet-Draft, draft-ietf-
+              httpbis-header-structure-19, 3 June 2020,
+              <http://www.ietf.org/internet-drafts/draft-ietf-httpbis-
+              header-structure-19.txt>.
+
 10.2.  Informative References
 
-   [I-D.ietf-quic-load-balancers]
-              Duke, M. and N. Banks, "QUIC-LB: Generating Routable QUIC
+   [QUIC-LB]  Duke, M. and N. Banks, "QUIC-LB: Generating Routable QUIC
               Connection IDs", Work in Progress, Internet-Draft, draft-
               ietf-quic-load-balancers-04, 14 August 2020,
               <http://www.ietf.org/internet-drafts/draft-ietf-quic-load-
@@ -867,6 +889,14 @@ Authors' Addresses
    One Apple Park Way
    Cupertino, California 95014,
    United States of America
+
+
+
+
+Pauly & Schinazi          Expires 19 April 2021                [Page 16]
+
+Internet-Draft                 QUIC Proxy                   October 2020
+
 
    Email: tpauly@apple.com
 
@@ -893,4 +923,30 @@ Authors' Addresses
 
 
 
-Pauly & Schinazi          Expires 19 April 2021                [Page 16]
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+Pauly & Schinazi          Expires 19 April 2021                [Page 17]
