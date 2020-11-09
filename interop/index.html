@@ -1,0 +1,65 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="utf-8">
+    <title>MASQUE Interoperability Tests</title>
+    <link rel="stylesheet" href="style.css" type="text/css">
+    <script type="module">
+      import index from './results/index.mjs'
+      import * as summary from './lib/summary.mjs'
+      import * as display from './lib/display.mjs'
+      import baseTests from './tests/index.mjs'
+
+      const loc = new URL(window.location)
+      const suiteIds = loc.searchParams.getAll('suite')
+      const testIds = loc.searchParams.getAll('id')
+      const isFrame = loc.searchParams.get('frame') && true || false
+      const isDefault = testIds.length === 0 && suiteIds.length === 0
+
+      if (! isFrame) {
+        document.querySelectorAll('.noFrame').forEach(e => {e.style.display = 'block'})
+      }
+
+      const ToC = document.getElementById('ToC')
+      const target = document.getElementById('target')
+      const key = document.getElementById('key')
+
+      display.showKey(key)
+      summary.loadResults(index)
+      .then(results => {
+        if (isDefault) {
+          summary.showToC(ToC, baseTests)
+        }
+        summary.showResults(target, baseTests, results, testIds, suiteIds)
+      })
+      .then(() => {
+        if (window.location.hash !== "") {
+          const fragId = window.location.hash.substring(1)
+          document.getElementById(fragId).scrollIntoView()
+        }
+      })
+    </script>
+  </head>
+  <body>
+    <h1 class='noFrame'>MASQUE Interoperability Tests</h1>
+
+    <p class="warning noFrame">These results are used for reporting interop testing only. This is intended for use tracking the results of IETF hackathon events.</p>
+
+    <p id="key">
+      <span class="key-item"><span class="fa" data-kind="pass"></span>Requirement passed &nbsp;</span>
+      <span class="key-item"><span class="fa" data-kind="should_fail"></span>SHOULD requirement failed &nbsp;</span>
+      <span class="key-item"><span class="fa" data-kind="must_fail"></span>MUST requirement failed &nbsp;</span>
+      <span class="key-item"><span class="fa" data-kind="yes"></span>Feature supported &nbsp;</span>
+      <span class="key-item"><span class="fa" data-kind="no"></span>Feature not supported &nbsp;</span>
+      <span class="key-item"><span class="fa" data-kind="untested"></span>Not tested</span>
+    </p>
+
+    <ul id="ToC" class="noFrame">
+    </ul>
+
+    <form method="GET" id="selectForm">
+      <table id="target">
+      </table>
+    </form>
+  </body>
+</html>
