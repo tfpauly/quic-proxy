@@ -1,0 +1,9 @@
+{
+  "connect-udp-h3-client": true,
+  "connect-udp-h2-client": false,
+  "connect-udp-h3-server": true,
+  "connect-udp-h2-server": false,
+  "connect-udp-pseudo-headers": true,
+  "connect-udp-flow-id-client": true,
+  "connect-udp-flow-id-echo": false
+}
