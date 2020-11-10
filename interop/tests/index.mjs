@@ -1,3 +1,3 @@
-import connectUDP from './connect-udp.mjs'
+import quicProxy from './draft-pauly-masque-quic-proxy.mjs'
 
-export default [connectUDP]
+export default [quicProxy]
