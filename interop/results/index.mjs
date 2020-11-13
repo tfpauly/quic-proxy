@@ -7,9 +7,5 @@ export default [
   {
     file: 'quiche.json',
     name: 'Quiche',
-  },
-  {
-    file: 'chromium.json',
-    name: 'Chromium',
   }
 ]
