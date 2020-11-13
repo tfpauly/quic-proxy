@@ -14,12 +14,12 @@ export default
         }, 
         {
             "kind": "should", 
-            "name": "Client sends the same `Datagram-Flow-Id` in all requests for the same connecion", 
+            "name": "Client sends the same `Datagram-Flow-Id` in all requests for the same connection",
             "id": "connect-udp-datagram-flow-id-match"
         }, 
         {
             "kind": "must", 
-            "name": "Client sends exactly on  `*-Connection-Id ` in each request", 
+            "name": "Client sends exactly one `*-Connection-Id ` in each request",
             "id": "connect-udp-quic-cids"
         }, 
         {
@@ -70,7 +70,7 @@ export default
         {
             "kind": "should", 
             "name": "Client stops sending requests for forwarded mode if the server sends an error other than `409 (Conflict)`", 
-            "id": "connect-udp-forwarded-rejected"
+            "id": "connect-udp-forwarded-stop"
         }, 
         {
             "kind": "must", 
