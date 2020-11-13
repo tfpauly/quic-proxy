@@ -1,9 +1,9 @@
 {
-  "connect-udp-h3-client": true,
-  "connect-udp-h2-client": false,
-  "connect-udp-h3-server": true,
-  "connect-udp-h2-server": false,
-  "connect-udp-pseudo-headers": true,
-  "connect-udp-flow-id-client": true,
-  "connect-udp-flow-id-echo": true
+  "connect-udp-authority": true,
+  "connect-udp-no-scheme-path": true,
+  "connect-udp-no-content-length": true,
+  "connect-udp-datagram": false,
+  "connect-udp-flow-id-echo": true,
+  "connect-udp-lv": false,
+  "connect-udp-validate-tuple": true,
 }
